@@ -3,8 +3,9 @@ var libeReader = function() {
         _displayedPage, _displayedBook, _zoomWindow, _winHeight, _winWidth, 
         _numberOfPages, _isZoomed, _zoomedPageHeight, _zoomedPageWidth, 
         _zoomMouseInit, _zoomPosInit, _zoomedPages, _zoomMouseDown, _step,
-        _HDgridContainer;
+        _HDgridContainer, _touchStartX, _touchStartY;
         
+    _touchTreshold = 30;
     _step = 21;
     
     function bindButtons() {
@@ -30,7 +31,25 @@ var libeReader = function() {
     function unbindKeyboard() {
         jQuery(document).unbind('keydown', keyboardCallback);
     }
+
+    function bindTouch() {
+        jQuery('.book').bind('mousedown', touchCallback)
+            .bind('mouseup', touchCallback)
+            .bind('touchstart', touchCallback)
+            .bind('touchmove', touchCallback)
+            .bind('touchcancel', touchCallback)
+            .bind('touchend', touchCallback);
+    }
     
+    function unbindTouch() {
+        jQuery('.book').unbind('mousedown', touchCallback)
+            .unbind('mouseup', touchCallback)
+            .unbind('touchstart', touchCallback)
+            .unbind('touchmove', touchCallback)
+            .unbind('touchcancel', touchCallback)
+            .unbind('touchend', touchCallback);
+    }
+
     function zoom(event) {
         var offset = jQuery(this).offset();
         if (!offset) {
@@ -47,13 +66,13 @@ var libeReader = function() {
             x = x + previousElement.width();
         }
         zoomAtCoordinates(x, y);
-        return false;
+        // return false;
     }
     
     function zoomAtCoordinates(x, y) {
         if (!libeConfig.canZoom()) {
             libeConfig.restrictedAccess();
-            return false;
+            // return false;
         }
         if (_isZoomed) {
             return false;
@@ -163,7 +182,7 @@ var libeReader = function() {
         jQuery(_zoomWindow).detach();
         jQuery(window).unbind('resize', zoomResize);
         jQuery(document.body).unbind('mousewheel');
-        jQuery(document.body).removeClass('zoomed');        
+        jQuery(document.body).removeClass('zoomed');
         jQuery('#pagesSlider').show();
         jQuery('#bookSwitcher').show();
         jQuery(document.body).css({'overflow': 'visible', 'height': 'auto' });
@@ -188,6 +207,55 @@ var libeReader = function() {
         }
     }
     
+    function touchCallback(e) {
+        function touchCancel() {
+            _touchStartX = null;
+            _touchStartY = null;
+        }
+        function setTouchStart(x, y) {
+            //console.log(x, y);
+            _touchStartX = x;
+            _touchStartY = y;
+        }
+        function touchEnd(e, x, y) {
+            // TODO: improve this, we don't use y for now.
+            if (_touchStartX !== null && Math.abs(_touchStartX - x) > _touchTreshold) {
+                if (_touchStartX > x) { // from left to right
+                    showNextPage(e);
+                } else {
+                    showPreviousPage(e);
+                }
+            }
+        }
+
+        if (!_isZoomed) {
+            switch(e.type) {
+                case "mousedown":
+                    setTouchStart(e.pageX, e.pageY);
+                    break;
+                case "touchstart":
+                    if (e.originalEvent.touches.length == 1) setTouchStart(e.originalEvent.touches[0].pageX, e.originalEvent.touches[0].pageY);
+                    else touchCancel();
+                    break;
+                case "mouseup":
+                    touchEnd(e, e.pageX, e.pageY);
+                    break;
+                case "touchend":
+                    if (e.originalEvent.touches.length == 1) {
+                        touchEnd(e, e.originalEvent.touches[0].pageX, e.originalEvent.touches[0].pageY);
+                    }
+                    _touchStartX = null;
+                    break;
+                case "touchcancel":
+                    touchCancel();
+                    break;
+                case "touchmove":
+                    // TODO ?
+                    break;
+            }
+        }
+    }
+
     function normalKeyboardCallback(e) {
         if (e.ctrlKey) {
             switch (e.which) {
@@ -269,10 +337,10 @@ var libeReader = function() {
     function zoomMouseDown(e) {    
         // iPhone/iPad
         if (e.touches) {
-            e.preventDefault();
+            //e.preventDefault();
             e = e.touches[0];
         } else {
-            e.preventDefault();
+            //e.preventDefault();
         }        
 
         _zoomMouseDown = true;
@@ -286,7 +354,7 @@ var libeReader = function() {
         _zoomMouseDown = false;
         _zoomWindow.addClass('grab');
         _zoomWindow.removeClass('grabbing');
-        e.preventDefault();
+        //e.preventDefault();
         
         zoomHighDefAtCoordinates(-parseInt(_zoomedPages.css('left'), 10), -parseInt(_zoomedPages.css('top'), 10));
     }
@@ -298,10 +366,10 @@ var libeReader = function() {
         
         // iPhone/iPad
         if (e.touches) {
-            e.preventDefault();
+            //e.preventDefault();
             e = e.touches[0];
         } else {
-            e.preventDefault();
+            //e.preventDefault();
         }
 
         zoomBy(_zoomMouseInit.x - e.clientX, _zoomMouseInit.y - e.clientY);
@@ -472,7 +540,8 @@ var libeReader = function() {
         
         unbindButtons();
         unbindKeyboard();
-        
+        unbindTouch();
+
         var evenSide = jQuery('#evenSide');
         var oddSide =  jQuery('#oddSide');
         var finalWidth = evenSide.width();
@@ -585,11 +654,12 @@ var libeReader = function() {
         displayPagination();
         bindButtons();
         bindKeyboard();
+        bindTouch();
         jQuery(document).trigger('pages-shown', [_displayedBook, shownPages]);
     }
         
     function showSelectedPage(e) {
-        e.preventDefault();
+        // e.preventDefault();
         var tmp = _parseHashtoGetParams(this.href.split('#!/')[1]);
         var newDisplayedBook = tmp[0];
         var newDisplayedPage = tmp[1] - tmp[1] % 2;
@@ -602,20 +672,20 @@ var libeReader = function() {
     }
     
     function showPreviousPage(e) {
-        e.preventDefault();
+        // e.preventDefault();
         showPage(_displayedPage - 2);
     }
     function showNextPage(e) {
-        e.preventDefault();
+        // e.preventDefault();
         showPage(_displayedPage + 2);
     }
     
     function showFirstPage(e) {
-        e.preventDefault();
+        // e.preventDefault();
         showPage(0);
     }
     function showLastPage(e) {
-        e.preventDefault();
+        // e.preventDefault();
         showPage(_selectedBook.pagination);
     }
     

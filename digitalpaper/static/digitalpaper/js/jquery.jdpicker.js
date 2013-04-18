@@ -186,14 +186,15 @@ jdPicker.prototype = {
 
     this.dateSelector = this.rootLayers = $('<div class="date_selector" '+style+'></div>').append(nav, tableShell).insertAfter(this.input);
     
-    if ($.browser.msie && $.browser.version < 7) {
+    /* TODO 
+      if ($.browser.msie && $.browser.version < 7) {
       
       this.ieframe = $('<iframe class="date_selector_ieframe" frameborder="0" src="#"></iframe>').insertBefore(this.dateSelector);
       this.rootLayers = this.rootLayers.add(this.ieframe);
       
       $(".button", nav).mouseover(function() { $(this).addClass("hover"); });
       $(".button", nav).mouseout(function() { $(this).removeClass("hover"); });
-    };
+    }; */
     
     this.tbody = $("tbody", this.dateSelector);
 
@@ -253,7 +254,7 @@ jdPicker.prototype = {
 			  }));
 		  }
 		  
-		  $("td[date=\"" + this.dateToString(new Date()) + "\"]", this.tbody).addClass("today");
+		  $("td[date='" + this.dateToString(new Date()) + "']", this.tbody).addClass("today");
 		  if(this.select_week == 1){
 			  $("tr", this.tbody).mouseover(function() { $(this).addClass("hover"); });
 			  $("tr", this.tbody).mouseout(function() { $(this).removeClass("hover"); });
@@ -308,21 +309,20 @@ jdPicker.prototype = {
   
   show: function() {
 	$('.error_msg', this.rootLayers).css('display', 'none');
-    this.rootLayers.fadeIn();
+    this.rootLayers.slideDown();
     $([window, document.body]).click(this.hideIfClickOutside);
-    this.input.unbind("click", this.show);
+    this.input.unbind("focus", this.show);
 	this.input.attr('readonly', true);
     $(document.body).keydown(this.keydownHandler);
     this.setPosition();
-    return false;
   },
   
   hide: function() {
 	if(this.input.context.type!="hidden"){
 		this.input.removeAttr('readonly');
-		this.rootLayers.fadeOut();
+		this.rootLayers.slideUp();
 		$([window, document.body]).unbind("click", this.hideIfClickOutside);
-		this.input.click(this.show);
+		this.input.focus(this.show);
 		$(document.body).unbind("keydown", this.keydownHandler);
 	}
   },
@@ -334,7 +334,7 @@ jdPicker.prototype = {
   },
   
   insideSelector: function(event) {
-    var offset = this.dateSelector.offset();
+    var offset = this.dateSelector.position();
     offset.right = offset.left + this.dateSelector.outerWidth();
     offset.bottom = offset.top + this.dateSelector.outerHeight();
     
@@ -402,10 +402,10 @@ jdPicker.prototype = {
   },
   
   setPosition: function() {
-    var position = this.input.position();
+    var offset = this.input.offset();
     this.rootLayers.css({
-      top: position.top + this.input.outerHeight(),
-      left: position.left
+      top: offset.top + this.input.outerHeight(),
+      left: offset.left
     });
     
     if (this.ieframe) {
@@ -520,8 +520,8 @@ jdPicker.prototype = {
   
   show_error: function(error){
 	$('.error_msg', this.rootLayers).html(error);
-	$('.error_msg', this.rootLayers).fadeIn(400, function(){
-		setTimeout("$('.error_msg', this.rootLayers).fadeOut(200);", 2000);
+	$('.error_msg', this.rootLayers).slideDown(400, function(){
+		setTimeout("$('.error_msg', this.rootLayers).slideUp(200);", 2000);
 	});
   },
   

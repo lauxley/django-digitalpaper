@@ -230,7 +230,8 @@ var libePage = function(pageNumber, pageId, pageChannel, pageMaps) {
         img.src = _imageSource = baseSrc.replace('{size}', 'x' + libeConfig.pageHeight);
         _pageElement.appendChild(img);
     }
-    
+    img.ondragstart = function() { return false; };
+
     if (_pageNumber % 2 === 0) {
         libeConfig.evenSideElement.appendChild(_pageElement);
     } else {
